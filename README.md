@@ -15,3 +15,8 @@ This project is a third-person action game featuring a parry mechanic and debugg
 ```bash
 git clone https://github.com/username/repository.git
 cd repository
+```
+## **Contact**
+- Developer: Brandin Stanfield
+- Email: Brandin.Stanfield@gmail.com
+- GitHub: https://github.com/malicehightopp1
