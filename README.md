@@ -1,15 +1,15 @@
-# **Unreal Engines Parry System
+# **Unreal Engines Parry System**
 
 ![Unreal Engine](https://img.shields.io/badge/Engine-Unreal%20Engine%205-blue)
 
-## Description
+## **Description**
 This project is a third-person action game featuring a parry mechanic and debugging that allows for easy use and understanding 
 
-## Engine Version
+## **Engine Version**
 - Unreal Engine 5.4.4
 - Make sure to use the correct version to avoid compatibility issues.
 
-## Project Setup
+## **Project Setup**
 
 ### 1. Clone the Repository
 ```bash
