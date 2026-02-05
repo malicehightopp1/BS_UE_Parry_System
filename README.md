@@ -6,7 +6,7 @@
 This project is a third-person action game featuring a parry mechanic and debugging that allows for easy use and understanding 
 
 ## **Engine Version**
-- Unreal Engine 5.4.4
+- Unreal Engine 5.5.4
 - Language: C++
 - Make sure to use the correct version to avoid compatibility issues.
 
