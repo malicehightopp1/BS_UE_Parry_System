@@ -7,6 +7,10 @@
 #include "InputActionValue.h"
 #include "MyCharacter.generated.h"
 
+class USpringArmComponent;
+class UCameraComponent;
+class AMyCharacter;
+
 UCLASS()
 class BS_UE_PARRYMECHANIC_API AMyCharacter : public ACharacter
 {
@@ -14,42 +18,44 @@ class BS_UE_PARRYMECHANIC_API AMyCharacter : public ACharacter
 
 public:
 	// Sets default values for this character's properties
-	AMyCharacter();
+	AMyCharacter(); //constructor
 	void AttemptParry();
 	void OpenParryWindow();
-
+	void CloseParryWindow(); //called at the edn of the anim and closes the parry 
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parry")
-	float mParryWindowDuration = 0.25f;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Parry")
 	bool bParryWindowOpen = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Parry")
-	bool bIsParrying = false;
-
-	FTimerHandle ParryWindowTimer;
-
-	void CloseParryWindow();
-
-	//Debugging
-	UPROPERTY(EditAnywhere, Category = "Parry|Debug")
-	bool bShowParryDebug = true;
-
-	UPROPERTY(EditAnywhere, Category = "Parry|Debug")
-	float mDebugSphereHeight = 120.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Parry" )
+	UAnimMontage* AM_Parry;
+	
 
 	//Enhanced Input
 
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	class UInputMappingContext* CombatMappingContext;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UPROPERTY(EditDefaultsOnly, Category = "Input") //context mapping
+	class UInputMappingContext* IMC_Default;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input") //movement input action
+	class UInputAction* IA_Move;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input") //look input action
+	class UInputAction* IA_Look;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Camera") //spring arm
+	USpringArmComponent* CameraSpringArm;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Camera") //follow camera
+	UCameraComponent* FollowCamera;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input") //parry input action
 	class UInputAction* ParryAction;
 
 	void OnParryInput(const FInputActionValue& Value);
+	void Move(const FInputActionValue& Value);	
+	void Look(const FInputActionValue& Value);
 };
