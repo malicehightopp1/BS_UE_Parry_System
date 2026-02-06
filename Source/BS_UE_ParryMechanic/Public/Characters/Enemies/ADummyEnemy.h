@@ -23,6 +23,7 @@ public:
 	
 	virtual void Tick(float DeltaTime) override;
 	UFUNCTION(BlueprintCallable, Category = "Combat") void SetIsParryable(bool bParryable) {bIsCurrentlyParryable = bParryable;}
+	UFUNCTION(Blueprintable, Category = "Timer") void TestTimerFunction();
 
 protected:
 	// Called when the game starts or when spawned
@@ -31,28 +32,25 @@ protected:
 	
 	UPROPERTY()
 	TArray<AActor*> AlreadyHitPlayers;
-	//Debugging
-	UPROPERTY(EditAnywhere, Category = "Parry|Debug")
-	bool bShowParryDebug = true;
 
-	UPROPERTY(EditAnywhere, Category = "Parry|Debug")
-	float mDebugSphereHeight = 120.0f;
-	//Skeletal Mesh For the dummy
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	USkeletalMeshComponent* SkeletalMesh;
-	
-	//Collision box used for detecting hits/parry
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UBoxComponent* AttackHitBox;
+	UPROPERTY(EditAnywhere, Category = "Timer") FTimerHandle timerHandle;
+	//Debugging
+	UPROPERTY(EditAnywhere, Category = "Parry|Debug") bool bShowParryDebug = true;
+
+	UPROPERTY(EditAnywhere, Category = "Parry|Debug") float mDebugSphereHeight = 120.0f;
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	///Components
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") USkeletalMeshComponent* SkeletalMesh;	//Skeletal Mesh For the dummy
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") UBoxComponent* AttackHitBox;//Collision box used for detecting hits/parry
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") UBoxComponent* MeshHitBox; //Enemy HitBox
 	
 	//attack animation montage
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attack")
-	UAnimMontage* AttackMontage;
-	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attack")UAnimMontage* AttackMontage;
 	//is attack currently active
-	UPROPERTY(visibleAnywhere, BlueprintReadOnly, Category = "Attack")
-	bool bAttackActive = false;
-	
+	UPROPERTY(visibleAnywhere, BlueprintReadOnly, Category = "Attack")bool bAttackActive = false;
 	
 	//Handles Overlap with player for parry detection
 	UFUNCTION()

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "Components/BoxComponent.h"
 #include "MyCharacter.generated.h"
 
 class USpringArmComponent;
@@ -33,8 +34,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Parry")
 	bool bParryWindowOpen = false;
 	
-	
-
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//// Input actions and character setup
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////

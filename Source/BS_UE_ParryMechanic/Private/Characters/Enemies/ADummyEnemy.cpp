@@ -18,8 +18,14 @@ AADummyEnemy::AADummyEnemy()
 	mDebugSphereHeight = 50.0f;
 	//Creating Mesh
 	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
-	RootComponent = SkeletalMesh;
-	
+	SkeletalMesh->SetupAttachment(RootComponent);
+
+	MeshHitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("MeshHitBox"));
+	MeshHitBox->SetupAttachment(RootComponent);
+	MeshHitBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	MeshHitBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+	SetRootComponent(MeshHitBox);
+
 	//Create HitBox
 	AttackHitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("AttackHitBox"));
 	AttackHitBox->SetupAttachment(SkeletalMesh);
@@ -36,7 +42,18 @@ void AADummyEnemy::BeginPlay()
 	Super::BeginPlay();
 	
 	AttackHitBox->SetCollisionEnabled(ECollisionEnabled::NoCollision); //setting the box collider to not take collision
+	GetWorldTimerManager().SetTimer( //testing timer
+		timerHandle,
+		this,
+		&AADummyEnemy::TestTimerFunction,
+		5.0f,
+		true);
 }
+void AADummyEnemy::TestTimerFunction() //for testing timer stuff
+{
+	UE_LOG(LogTemp, Warning, TEXT("Test TimerFunction"));
+}
+#pragma region Anim Notify
 void AADummyEnemy::OpenAttackWindow() //opening the parry window for the play
 {
 	bAttackActive = true;
@@ -51,65 +68,71 @@ void AADummyEnemy::CloseAttackWindow() //closing the parry window for the player
 	bIsCurrentlyParryable = false;
 	AttackHitBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
+#pragma endregion
+#pragma region Attack/Parry detection
 void AADummyEnemy::OnAttackOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (!bAttackActive || AlreadyHitPlayers.Contains(OtherActor)) return;
-
-	USkeletalMeshComponent* MeshComp = FindComponentByClass<USkeletalMeshComponent>();
-	UAnimInstance* AnimInstance = MeshComp->GetAnimInstance();
-	if (AMyCharacter* Player = Cast<AMyCharacter>(OtherActor))
+{ //called when  overlapped with this collider
+	if (!bAttackActive || AlreadyHitPlayers.Contains(OtherActor)) return; //stops the function if tjhe attack is not active or actor was already hit
+	
+	UAnimInstance* AnimInstance = SkeletalMesh->GetAnimInstance(); //gets the dummies skeletal mesh then gets anim instance off it
+	if (AMyCharacter* Player = Cast<AMyCharacter>(OtherActor)) //checking if the other actor is the AMyCharacter
 	{
 		//checking if the player is parrying and if the parry animation is playing
 		if (bIsCurrentlyParryable && Player->GetMesh()->GetAnimInstance()->Montage_IsPlaying(Player->AM_Parry))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Player Parried Successfully"));
-			AnimInstance->Montage_Stop(0.2f, AttackMontage); //Stopping enemy animation if parried succesfully
-			CloseAttackWindow(); //closing the attack 
-			AlreadyHitPlayers.Add(OtherActor);
+			AnimInstance->Montage_Stop(0.3f, AttackMontage); //Stopping enemy animation if parried succesfully
+			CloseAttackWindow(); //closing the attack disabling hitbox component
+			AlreadyHitPlayers.Add(OtherActor); //mark player as already hit 
 			
 			return;
 		}
 		if (!bIsCurrentlyParryable) //if player failed the parry
 		{
-			AlreadyHitPlayers.Add(Player);
+			AlreadyHitPlayers.Add(Player); //logs that the player was hit
 			UE_LOG(LogTemp, Warning, TEXT("Player Parry Failed"));
 		}
 	}
-
 }
+#pragma endregion
+#pragma region Debug
 void AADummyEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	if (bAttackActive) //while the Attack is able to be parried draw a box to show the parry zone
+	if (bShowParryDebug)
 	{
-		DrawDebugBox(
+		if (bAttackActive) //while the Attack is able to be parried draw a box to show the parry zone
+		{
+			FColor BoxColor = bAttackActive ? FColor::Green : FColor::Red;
+			DrawDebugBox(
+				GetWorld(),
+				AttackHitBox->GetComponentLocation(),
+				AttackHitBox->GetScaledBoxExtent(),
+				BoxColor,
+				false,
+				0.0f,
+				0,
+				2.0f
+			);
+		}
+		
+		if (bShowParryDebug) //while the Attack is able to be parried draw a Sphere above the head to show it can be parried
+		{
+			FVector SphereLocation = GetActorLocation() + FVector(0.0f, 0.0f, mDebugSphereHeight);
+			FColor SphereColor = bAttackActive ? FColor::Green : FColor::Red;
+			
+			DrawDebugSphere(
 			GetWorld(),
-			AttackHitBox->GetComponentLocation(),
-			AttackHitBox->GetScaledBoxExtent(),
-			FColor::Green,
+			SphereLocation,
+			30.0f,
+			12,
+			SphereColor,
 			false,
 			0.0f,
 			0,
 			2.0f
-		);
-	}
-	
-	if (bShowParryDebug) //while the Attack is able to be parried draw a Sphere above the head to show it can be parried
-	{
-		FVector SphereLocation = GetActorLocation() + FVector(0.0f, 0.0f, mDebugSphereHeight);
-		FColor SphereColor = bAttackActive ? FColor::Green : FColor::Red;
-		
-		DrawDebugSphere(
-		GetWorld(),
-		SphereLocation,
-		30.0f,
-		12,
-		SphereColor,
-		false,
-		0.0f,
-		0,
-		2.0f
-		);
+			);
+		}
 	}
 }
+#pragma endregion
