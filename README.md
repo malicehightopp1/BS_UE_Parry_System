@@ -14,6 +14,7 @@ This project is a third-person action game featuring a parry mechanic and debugg
 
 ### 1. Clone the Repository
 ```bash
+gh auth login
 git clone https://github.com/username/repository.git
 cd repository
 ```
