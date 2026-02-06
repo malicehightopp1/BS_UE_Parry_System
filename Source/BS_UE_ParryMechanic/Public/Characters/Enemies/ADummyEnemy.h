@@ -17,21 +17,20 @@ class BS_UE_PARRYMECHANIC_API AADummyEnemy : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AADummyEnemy();
+
+	UFUNCTION(BlueprintCallable) void OpenAttackWindow();
+	UFUNCTION(BlueprintCallable) void CloseAttackWindow();
 	
 	virtual void Tick(float DeltaTime) override;
-	
-	UFUNCTION(BlueprintCallable, Category = "Attack")
-	void OpenAttackWindow();
-	
-	UFUNCTION(BlueprintCallable, Category = "Attack")
-	void CloseAttackWindow();
+	UFUNCTION(BlueprintCallable, Category = "Combat") void SetIsParryable(bool bParryable) {bIsCurrentlyParryable = bParryable;}
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat") bool bIsCurrentlyParryable = false;
 	
 	UPROPERTY()
-	TSet<AMyCharacter*> AlreadyHitPlayers;
+	TArray<AActor*> AlreadyHitPlayers;
 	//Debugging
 	UPROPERTY(EditAnywhere, Category = "Parry|Debug")
 	bool bShowParryDebug = true;

@@ -94,35 +94,17 @@ void AMyCharacter::OnParryInput(const FInputActionValue& Value)
 void AMyCharacter::AttemptParry()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Attempt Parry"));
-	if (!AM_Parry) return; //Do we have a parry animation?
 	
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance(); //get animation instance
-	if (!AnimInstance) return;
-	
-	if (AnimInstance -> Montage_IsPlaying(AM_Parry)) //prevent spamming of parry animation
+	if (AnimInstance && AM_Parry && !AnimInstance -> Montage_IsPlaying(AM_Parry)) //prevent spamming of parry animation
 	{
-		return; //could try to add timer to make it a bigger delay but this works fine right now
-	}
-	//Play the parry animation
-	if (bParryWindowOpen)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Parry Successful"));
 		PlayAnimMontage(AM_Parry);
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Parry Failed"));
-	}
 }
-void AMyCharacter::OpenParryWindow()
+void AMyCharacter::SetParryWindow(bool bIsOpen)
 {
-	bParryWindowOpen = true;
-	UE_LOG(LogTemp, Warning, TEXT("Parry window Open"));
-}
-void AMyCharacter::CloseParryWindow()
-{
-	bParryWindowOpen = false;
-	UE_LOG(LogTemp, Warning, TEXT("Parry window closed"));
+	bParryWindowOpen = bIsOpen;
+	UE_LOG(LogTemp, Warning, TEXT("Set Parry Window"));
 }
 #pragma endregion
 #pragma region Movement

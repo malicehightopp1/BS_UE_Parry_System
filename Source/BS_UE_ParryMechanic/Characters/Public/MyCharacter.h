@@ -20,9 +20,11 @@ public:
 	// Sets default values for this character's properties
 	AMyCharacter(); //constructor
 	void AttemptParry();
-	void OpenParryWindow();
-	void CloseParryWindow(); //called at the edn of the anim and closes the parry 
+
+	UFUNCTION(BlueprintCallable, Category = "ParrySystem") void SetParryWindow(bool bIsOpen);
+	UFUNCTION(BlueprintCallable, Category = "ParrySystem") bool IsParryWindowOpen() const {return bParryWindowOpen;}; //called at the edn of the anim and closes the parry 
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Parry" ) UAnimMontage* AM_Parry; //needs to be accessable to the dummy to check if animation is playing
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -31,11 +33,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Parry")
 	bool bParryWindowOpen = false;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Parry" )
-	UAnimMontage* AM_Parry;
 	
 
-	//Enhanced Input
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//// Input actions and character setup
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input") //context mapping
 	class UInputMappingContext* IMC_Default;
