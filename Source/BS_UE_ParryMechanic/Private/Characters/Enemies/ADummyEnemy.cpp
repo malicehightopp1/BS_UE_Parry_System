@@ -41,22 +41,29 @@ void AADummyEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	bIsAttacking = true;
 	AttackHitBox->SetCollisionEnabled(ECollisionEnabled::NoCollision); //setting the box collider to not take collision
-	GetWorldTimerManager().SetTimer( //testing timer
-		timerHandle,
-		this,
-		&AADummyEnemy::TestTimerFunction,
-		5.0f,
-		true);
 }
-void AADummyEnemy::TestTimerFunction() //for testing timer stuff
+void AADummyEnemy::EnterStunnedState()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Test TimerFunction"));
+	bIsStunned = true;
+	bIsAttacking = false;
+	
+	GetWorldTimerManager().SetTimer(
+	StunTimerHandle,
+	this,
+	&AADummyEnemy::ExitStunnedState,
+	StunTime,
+	false);
+}
+void AADummyEnemy::ExitStunnedState()
+{
+	bIsStunned = false;
+	bIsAttacking = true;
 }
 #pragma region Anim Notify
 void AADummyEnemy::OpenAttackWindow() //opening the parry window for the play
 {
-	bAttackActive = true;
 	AlreadyHitPlayers.Empty();
 	AttackHitBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
@@ -64,7 +71,6 @@ void AADummyEnemy::OpenAttackWindow() //opening the parry window for the play
 }
 void AADummyEnemy::CloseAttackWindow() //closing the parry window for the player
 {
-	bAttackActive = false;
 	bIsCurrentlyParryable = false;
 	AttackHitBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
@@ -72,23 +78,24 @@ void AADummyEnemy::CloseAttackWindow() //closing the parry window for the player
 #pragma region Attack/Parry detection
 void AADummyEnemy::OnAttackOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 { //called when  overlapped with this collider
-	if (!bAttackActive || AlreadyHitPlayers.Contains(OtherActor)) return; //stops the function if tjhe attack is not active or actor was already hit
+	if (!bIsAttacking || AlreadyHitPlayers.Contains(OtherActor)) return; //stops the function if tjhe attack is not active or actor was already hit
 	
 	UAnimInstance* AnimInstance = SkeletalMesh->GetAnimInstance(); //gets the dummies skeletal mesh then gets anim instance off it
 	if (AMyCharacter* Player = Cast<AMyCharacter>(OtherActor)) //checking if the other actor is the AMyCharacter
 	{
 		//checking if the player is parrying and if the parry animation is playing
-		if (bIsCurrentlyParryable && Player->GetMesh()->GetAnimInstance()->Montage_IsPlaying(Player->AM_Parry))
+		if (bIsCurrentlyParryable && Player->GetMesh()->GetAnimInstance()->Montage_IsPlaying(Player->GetAnimationMontage()))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Player Parried Successfully"));
-			AnimInstance->Montage_Stop(0.3f, AttackMontage); //Stopping enemy animation if parried succesfully
 			CloseAttackWindow(); //closing the attack disabling hitbox component
 			AlreadyHitPlayers.Add(OtherActor); //mark player as already hit 
+			EnterStunnedState();
 			
 			return;
 		}
 		if (!bIsCurrentlyParryable) //if player failed the parry
 		{
+			Player->HealthChange(10);
 			AlreadyHitPlayers.Add(Player); //logs that the player was hit
 			UE_LOG(LogTemp, Warning, TEXT("Player Parry Failed"));
 		}
@@ -101,9 +108,9 @@ void AADummyEnemy::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if (bShowParryDebug)
 	{
-		if (bAttackActive) //while the Attack is able to be parried draw a box to show the parry zone
+		if (bIsAttacking) //while the Attack is able to be parried draw a box to show the parry zone
 		{
-			FColor BoxColor = bAttackActive ? FColor::Green : FColor::Red;
+			FColor BoxColor = bIsAttacking ? FColor::Green : FColor::Red;
 			DrawDebugBox(
 				GetWorld(),
 				AttackHitBox->GetComponentLocation(),
@@ -115,11 +122,10 @@ void AADummyEnemy::Tick(float DeltaTime)
 				2.0f
 			);
 		}
-		
 		if (bShowParryDebug) //while the Attack is able to be parried draw a Sphere above the head to show it can be parried
 		{
 			FVector SphereLocation = GetActorLocation() + FVector(0.0f, 0.0f, mDebugSphereHeight);
-			FColor SphereColor = bAttackActive ? FColor::Green : FColor::Red;
+			FColor SphereColor = bIsAttacking ? FColor::Green : FColor::Red;
 			
 			DrawDebugSphere(
 			GetWorld(),

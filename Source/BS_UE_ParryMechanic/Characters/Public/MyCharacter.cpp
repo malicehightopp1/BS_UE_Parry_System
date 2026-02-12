@@ -6,10 +6,13 @@
 #include "EnhancedInputComponent.h" //binds animations
 #include "EnhancedInputSubSystems.h" //Add inputs mapping context
 #include "DrawDebugHelpers.h" //drawing debug sphere
+#include "MathUtil.h"
 #include "Animation/AnimInstance.h" //play animations
+#include "Blueprint/UserWidget.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/ProgressBar.h"
 #include "GameFramework/CharacterMovementComponent.h"
 // Sets default values
 AMyCharacter::AMyCharacter()
@@ -42,12 +45,21 @@ AMyCharacter::AMyCharacter()
 	//Movement Rotation 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f,540.0f,0.0f);
+	
+	MaxHealth = 100; // Setting max health 
+	MaxStamina = 100; //setting max stamina
+	
 }
-#pragma region Input Setup
+
+#pragma region Player Setup
 void AMyCharacter::BeginPlay() //basically 1. when the game starts do normal setup 2.check if the character is controlled by a player 
                               //3. if yes, get that players enhanced input system 4. Add the combat controls to the input system so the payer can use them
 {
 	Super::BeginPlay();
+	CurrenHealth = MaxHealth; //setting current health to max health on start
+	CurrentStamina = MaxStamina; //setting current stamina to max stamina on start
+	
+	//GetWorld()->GetTimerManager().SetTimer(StaminaTimer, this, &AMyCharacter::StaminaChange(-10), 2.0f, false );
 	
 	APlayerController* PC = Cast<APlayerController>(Controller); //casting the player controller to a player controller just making sure the player controller is a player controller
 	if (PC)//seeing if the controller is a player and if it is stores it in the PC variable
@@ -75,25 +87,33 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	
 	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent)) //converting input component to the enhanced input version
 	{
-		if (ParryAction)//binding the parry action to the enhanced input component
+		if (ParryAction || IA_Move || IA_Look)//binding the parry action to the enhanced input component
 		{
-			EnhancedInput->BindAction( ParryAction,ETriggerEvent::Started,this,&AMyCharacter::OnParryInput);//started because its only played at the start
-		}
-		if (IA_Move)//binding the Move action to the enhanced input component
-		{
+			EnhancedInput->BindAction( ParryAction,ETriggerEvent::Started,this,&AMyCharacter::OnParryInput);//started because it's only played at the start
 			EnhancedInput->BindAction(IA_Move, ETriggerEvent::Triggered, this, &AMyCharacter::Move);//triggered because its fired every frame
-		}
-		if (IA_Look)//binding the Look action to the enhanced input component
-		{
 			EnhancedInput->BindAction(IA_Look, ETriggerEvent::Triggered, this, &AMyCharacter::Look);//triggered because its fired every frame
 		}
 	}
 }
+
+void AMyCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	StaminaRegenHandle(DeltaSeconds);
+}
 #pragma endregion
-#pragma region Parry 
+#pragma region Parry System
 void AMyCharacter::OnParryInput(const FInputActionValue& Value) //on input of the parry input play function
 {
-	AttemptParry();
+	if (CurrentStamina <= 9)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Parry failed: Not enough Stamina!!"))
+	}
+	else
+	{
+		AttemptParry();
+		StaminaChange(10);
+	}
 }
 void AMyCharacter::AttemptParry()
 {
@@ -111,7 +131,7 @@ void AMyCharacter::SetParryWindow(bool bIsOpen)
 	UE_LOG(LogTemp, Warning, TEXT("Set Parry Window"));
 }
 #pragma endregion
-#pragma region Movement
+#pragma region Player Inputs
 void AMyCharacter::Move(const FInputActionValue& Value)
 {
 	// input is a Vector2D
@@ -134,8 +154,6 @@ void AMyCharacter::Move(const FInputActionValue& Value)
 		AddMovementInput(RightDirection, MovementVector.X);
 	}
 }
-#pragma endregion
-#pragma region Look
 void AMyCharacter::Look(const FInputActionValue& Value)
 {
 	// input is a Vector2D
@@ -147,5 +165,50 @@ void AMyCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+#pragma endregion
+#pragma region PlayerStats
+void AMyCharacter::HealthChange(float HealthToLose)
+{
+	CurrenHealth -= HealthToLose;
+	CurrenHealth = FMath::Clamp(CurrenHealth, 0, MaxHealth);
+	UE_LOG(LogTemp, Warning, TEXT("CurrenHealth: %f"), CurrenHealth);
+	if (CurrenHealth <= 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Player died"));
+	}
+}
+void AMyCharacter::StaminaChange(float StaminaToLose)
+{
+	if (StaminaToLose > 0.f)
+	{
+		StaminaRegenTimer = 0.f;
+	}
+	
+	CurrentStamina -= StaminaToLose;
+	CurrentStamina = FMath::Clamp(CurrentStamina, 0, MaxStamina);
+}
+
+void AMyCharacter::StaminaRegenHandle(float DeltaSeconds)
+{
+	if (CurrentStamina >= MaxStamina)
+	{
+		StaminaRegenTimer = 0.f;
+		return;
+	}
+	StaminaRegenTimer += DeltaSeconds;
+	
+	if (StaminaRegenTimer >= StaminaRegenInterval)
+	{
+		StaminaRegenTimer = 0.f;
+		StaminaChange(-StaminaRegenInterval);
+	}
+	
+}
+#pragma endregion
+#pragma region Getters and Setters
+UAnimMontage* AMyCharacter::GetAnimationMontage() const
+{
+	return AM_Parry;
 }
 #pragma endregion

@@ -15,51 +15,61 @@ class BS_UE_PARRYMECHANIC_API AADummyEnemy : public AActor
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
-	AADummyEnemy();
+		// Sets default values for this actor's properties
+		AADummyEnemy();
 
-	UFUNCTION(BlueprintCallable) void OpenAttackWindow();
-	UFUNCTION(BlueprintCallable) void CloseAttackWindow();
+		UFUNCTION(BlueprintCallable) void OpenAttackWindow();
+		UFUNCTION(BlueprintCallable) void CloseAttackWindow();
+		
+		virtual void Tick(float DeltaTime) override;
+		UFUNCTION(BlueprintCallable, Category = "Dummy | Combat | Attack") void SetIsParryable(bool bParryable) {bIsAttacking = bParryable;}
 	
-	virtual void Tick(float DeltaTime) override;
-	UFUNCTION(BlueprintCallable, Category = "Combat") void SetIsParryable(bool bParryable) {bIsCurrentlyParryable = bParryable;}
-	UFUNCTION(Blueprintable, Category = "Timer") void TestTimerFunction();
-
+		UPROPERTY(BlueprintReadOnly, Category = "Dummy | Combat | Stun") bool bIsStunned = false;
+		UPROPERTY(BlueprintReadOnly, Category = "Dummy | Combat | Attack")bool bIsAttacking = false;
+	
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat") bool bIsCurrentlyParryable = false;
+		UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category = "Dummy | Dummy Setup | Components") USkeletalMeshComponent* SkeletalMesh;	//Skeletal Mesh For the dummy
 	
-	UPROPERTY()
-	TArray<AActor*> AlreadyHitPlayers;
-
-	UPROPERTY(EditAnywhere, Category = "Timer") FTimerHandle timerHandle;
-	//Debugging
-	UPROPERTY(EditAnywhere, Category = "Parry|Debug") bool bShowParryDebug = true;
-
-	UPROPERTY(EditAnywhere, Category = "Parry|Debug") float mDebugSphereHeight = 120.0f;
+private:
+		virtual void BeginPlay() override;
+	
+		void EnterStunnedState();
+		void ExitStunnedState();
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//// Combat
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+		UPROPERTY(VisibleAnywhere, Category = "Dummy | Combat | Attack") bool bIsCurrentlyParryable = false;
+		//is attack currently active
+		UPROPERTY()
+		TArray<AActor*> AlreadyHitPlayers;
+		//stun 
+		UPROPERTY(EditAnywhere, Category = "Dummy | Combat | Stun") float StunTime = 5.0f;
+		FTimerHandle StunTimerHandle;
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///Components
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") USkeletalMeshComponent* SkeletalMesh;	//Skeletal Mesh For the dummy
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") UBoxComponent* AttackHitBox;//Collision box used for detecting hits/parry
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") UBoxComponent* MeshHitBox; //Enemy HitBox
+		UPROPERTY(VisibleAnywhere, Category = "Dummy | Dummy Setup | Components") UBoxComponent* AttackHitBox;//Collision box used for detecting hits/parry
+		UPROPERTY(VisibleAnywhere, Category = "Dummy | Dummy Setup | Components") UBoxComponent* MeshHitBox; //Enemy HitBox
+		
+		
+		//Handles Overlap with player for parry detection
+		UFUNCTION()
+		void OnAttackOverlap(
+			UPrimitiveComponent* OverlappedComponent,
+			AActor* OtherActor,
+			UPrimitiveComponent* OtherComp,
+			int32 OtherBodyIndex,
+			bool bFromSweep,
+			const FHitResult& SweepResult	
+		);
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	///Debugging
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
-	//attack animation montage
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attack")UAnimMontage* AttackMontage;
-	//is attack currently active
-	UPROPERTY(visibleAnywhere, BlueprintReadOnly, Category = "Attack")bool bAttackActive = false;
-	
-	//Handles Overlap with player for parry detection
-	UFUNCTION()
-	void OnAttackOverlap(
-		UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex,
-		bool bFromSweep,
-		const FHitResult& SweepResult
-	);
+		UPROPERTY(EditAnywhere, Category = "Dummy | Parry | Debug") bool bShowParryDebug = true;
+
+		UPROPERTY(EditAnywhere, Category = "Dummy | Parry | Debug") float mDebugSphereHeight = 120.0f;
 };
