@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "NiagaraSystem.h"
 #include "ADummyEnemy.generated.h"
 
 class AMyCharacter;
@@ -26,13 +27,19 @@ public:
 	
 		UPROPERTY(BlueprintReadOnly, Category = "Dummy | Combat | Stun") bool bIsStunned = false;
 		UPROPERTY(BlueprintReadOnly, Category = "Dummy | Combat | Attack")bool bIsAttacking = false;
+		UPROPERTY(EditAnywhere,BlueprintReadOnly, Category = "Dummy | Combat | Charge") bool bIsCharging = false;
+		UFUNCTION(BlueprintCallable, Category = "Dummy | ParrySystem | Particles") void SpawnParticles();
 	
 protected:
 		UPROPERTY(VisibleAnywhere,BlueprintReadOnly, Category = "Dummy | Dummy Setup | Components") USkeletalMeshComponent* SkeletalMesh;	//Skeletal Mesh For the dummy
 	
 private:
 		virtual void BeginPlay() override;
-	
+
+		UPROPERTY(EditDefaultsOnly, Category = "Dummy | ParrySystem | Particles") UNiagaraSystem* ParryEffect;
+		UPROPERTY(EditDefaultsOnly, Category = "Dummy | ParrySystem | Particles") UBoxComponent* ParticleBox;
+		UPROPERTY(EditDefaultsOnly, Category = "Dummy | ParrySystem | Particles") FVector ParticleLocation;
+		UPROPERTY(EditDefaultsOnly, Category = "Dummy | ParrySystem | Particles") FRotator ParticleRotation;
 		void EnterStunnedState();
 		void ExitStunnedState();
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////

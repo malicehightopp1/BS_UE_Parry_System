@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
-#include "Components/BoxComponent.h"
 #include "MyCharacter.generated.h"
 
 //class UProgressBar;
@@ -32,7 +31,7 @@ private:
 		void AttemptParry();
 		
 		UFUNCTION(BlueprintCallable, Category = "Player | ParrySystem") void SetParryWindow(bool bIsOpen);
-		UFUNCTION(BlueprintCallable, Category = "Player | ParrySystem") bool IsParryWindowOpen() const {return bParryWindowOpen;}; //called at the edn of the anim and closes the parry 
+		UFUNCTION(BlueprintCallable, Category = "Player | ParrySystem") bool IsParryWindowOpen() const {return bParryWindowOpen;}; //called at the edn of the anim and closes the parry
 		
 	//Stamina
 		UFUNCTION(BlueprintCallable, Category = "Player | Player Stats |Player Stamina") void StaminaChange(float StaminaToLose);

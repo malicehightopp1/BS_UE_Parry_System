@@ -6,13 +6,10 @@
 #include "EnhancedInputComponent.h" //binds animations
 #include "EnhancedInputSubSystems.h" //Add inputs mapping context
 #include "DrawDebugHelpers.h" //drawing debug sphere
-#include "MathUtil.h"
 #include "Animation/AnimInstance.h" //play animations
-#include "Blueprint/UserWidget.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/ProgressBar.h"
 #include "GameFramework/CharacterMovementComponent.h"
 // Sets default values
 AMyCharacter::AMyCharacter()
@@ -27,6 +24,8 @@ AMyCharacter::AMyCharacter()
 	CameraSpringArm->SetupAttachment(RootComponent); //attaching spring arm to the root component
 	CameraSpringArm->TargetArmLength = 300.0f; //setting the length of spring arm to 300
 	CameraSpringArm->bUsePawnControlRotation = true;
+
+	//creating particle spawn location
 
 	//hitbox setup
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -58,8 +57,6 @@ void AMyCharacter::BeginPlay() //basically 1. when the game starts do normal set
 	Super::BeginPlay();
 	CurrenHealth = MaxHealth; //setting current health to max health on start
 	CurrentStamina = MaxStamina; //setting current stamina to max stamina on start
-	
-	//GetWorld()->GetTimerManager().SetTimer(StaminaTimer, this, &AMyCharacter::StaminaChange(-10), 2.0f, false );
 	
 	APlayerController* PC = Cast<APlayerController>(Controller); //casting the player controller to a player controller just making sure the player controller is a player controller
 	if (PC)//seeing if the controller is a player and if it is stores it in the PC variable

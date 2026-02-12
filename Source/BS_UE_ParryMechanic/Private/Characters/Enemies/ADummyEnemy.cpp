@@ -6,8 +6,8 @@
 #include "Animation/AnimInstance.h"
 #include "GameFramework/Character.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Engine/EngineTypes.h"
-#include "UniversalObjectLocators/AnimInstanceLocatorFragment.h"
 
 // Sets default values
 AADummyEnemy::AADummyEnemy()
@@ -20,6 +20,10 @@ AADummyEnemy::AADummyEnemy()
 	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
 	SkeletalMesh->SetupAttachment(RootComponent);
 
+	ParticleBox = CreateDefaultSubobject<UBoxComponent>(TEXT("ParticleBox"));
+	ParticleBox->SetupAttachment(SkeletalMesh);
+	ParticleBox->bHiddenInGame = true;
+	
 	MeshHitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("MeshHitBox"));
 	MeshHitBox->SetupAttachment(RootComponent);
 	MeshHitBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -41,6 +45,11 @@ void AADummyEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	FVector BoxLocation = ParticleBox->GetComponentLocation();
+	FRotator BoxRotation = ParticleBox->GetComponentRotation();
+	ParticleLocation = BoxLocation;
+	ParticleRotation = BoxRotation;
+	
 	bIsAttacking = true;
 	AttackHitBox->SetCollisionEnabled(ECollisionEnabled::NoCollision); //setting the box collider to not take collision
 }
@@ -61,6 +70,24 @@ void AADummyEnemy::ExitStunnedState()
 	bIsStunned = false;
 	bIsAttacking = true;
 }
+void AADummyEnemy::SpawnParticles()
+{
+	if (ParryEffect)
+	{
+		UE_LOG(LogTemp, Display, TEXT("SpawnParticles"));
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+		GetWorld(),
+		ParryEffect,
+		ParticleLocation,
+		ParticleRotation,
+		FVector(1.0f),
+		true,
+		true,
+		ENCPoolMethod::None,
+		true
+		);
+	}
+}
 #pragma region Anim Notify
 void AADummyEnemy::OpenAttackWindow() //opening the parry window for the play
 {
@@ -80,12 +107,12 @@ void AADummyEnemy::OnAttackOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 { //called when  overlapped with this collider
 	if (!bIsAttacking || AlreadyHitPlayers.Contains(OtherActor)) return; //stops the function if tjhe attack is not active or actor was already hit
 	
-	UAnimInstance* AnimInstance = SkeletalMesh->GetAnimInstance(); //gets the dummies skeletal mesh then gets anim instance off it
 	if (AMyCharacter* Player = Cast<AMyCharacter>(OtherActor)) //checking if the other actor is the AMyCharacter
 	{
 		//checking if the player is parrying and if the parry animation is playing
 		if (bIsCurrentlyParryable && Player->GetMesh()->GetAnimInstance()->Montage_IsPlaying(Player->GetAnimationMontage()))
 		{
+			SpawnParticles(); //spawning parry particles
 			UE_LOG(LogTemp, Warning, TEXT("Player Parried Successfully"));
 			CloseAttackWindow(); //closing the attack disabling hitbox component
 			AlreadyHitPlayers.Add(OtherActor); //mark player as already hit 
@@ -108,9 +135,9 @@ void AADummyEnemy::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if (bShowParryDebug)
 	{
-		if (bIsAttacking) //while the Attack is able to be parried draw a box to show the parry zone
+		if (bIsCurrentlyParryable) //while the Attack is able to be parried draw a box to show the parry zone
 		{
-			FColor BoxColor = bIsAttacking ? FColor::Green : FColor::Red;
+			FColor BoxColor = bIsCurrentlyParryable ? FColor::Green : FColor::Red;
 			DrawDebugBox(
 				GetWorld(),
 				AttackHitBox->GetComponentLocation(),
@@ -121,23 +148,23 @@ void AADummyEnemy::Tick(float DeltaTime)
 				0,
 				2.0f
 			);
-		}
-		if (bShowParryDebug) //while the Attack is able to be parried draw a Sphere above the head to show it can be parried
-		{
-			FVector SphereLocation = GetActorLocation() + FVector(0.0f, 0.0f, mDebugSphereHeight);
-			FColor SphereColor = bIsAttacking ? FColor::Green : FColor::Red;
-			
-			DrawDebugSphere(
-			GetWorld(),
-			SphereLocation,
-			30.0f,
-			12,
-			SphereColor,
-			false,
-			0.0f,
-			0,
-			2.0f
-			);
+			if (bShowParryDebug) //while the Attack is able to be parried draw a Sphere above the head to show it can be parried
+			{
+				FVector SphereLocation = GetActorLocation() + FVector(0.0f, 0.0f, mDebugSphereHeight);
+				FColor SphereColor = bIsCurrentlyParryable ? FColor::Green : FColor::Red;
+				
+				DrawDebugSphere(
+				GetWorld(),
+				SphereLocation,
+				30.0f,
+				12,
+				SphereColor,
+				false,
+				0.0f,
+				0,
+				2.0f
+				);
+			}
 		}
 	}
 }
