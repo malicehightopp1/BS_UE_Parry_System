@@ -72,7 +72,7 @@ void AADummyEnemy::ExitStunnedState()
 }
 void AADummyEnemy::SpawnParticles()
 {
-	if (ParryEffect)
+	if (ParryEffect && bIsCurrentlyParryable)
 	{
 		UE_LOG(LogTemp, Display, TEXT("SpawnParticles"));
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
@@ -135,8 +135,6 @@ void AADummyEnemy::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if (bShowParryDebug)
 	{
-		if (bIsCurrentlyParryable) //while the Attack is able to be parried draw a box to show the parry zone
-		{
 			FColor BoxColor = bIsCurrentlyParryable ? FColor::Green : FColor::Red;
 			DrawDebugBox(
 				GetWorld(),
@@ -164,7 +162,6 @@ void AADummyEnemy::Tick(float DeltaTime)
 				0,
 				2.0f
 				);
-			}
 		}
 	}
 }
